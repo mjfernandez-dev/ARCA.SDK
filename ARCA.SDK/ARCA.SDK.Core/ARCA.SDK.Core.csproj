@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net48;net8.0</TargetFrameworks>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+
+		<!-- Metadatos del paquete NuGet -->
+		<PackageId>ARCA.SDK</PackageId>
+		<Version>0.1.0-alpha</Version>
+		<Authors>Tu Nombre</Authors>
+		<Company>Tu Nombre</Company>
+		<Description>SDK .NET para integrar sistemas con ARCA (ex AFIP)</Description>
+		<PackageProjectUrl>https://github.com/mjfernandez-dev/ARCA.SDK</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/mjfernandez-dev/ARCA.SDK</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>arca;afip;factura-electronica;argentina;wsfe</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+		<!-- Generar documentación XML -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+</Project>
