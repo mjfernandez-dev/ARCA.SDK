@@ -21,4 +21,10 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <Folder Include="Clients\" />
+	  <Folder Include="Utils\" />
+	  <Folder Include="Services\" />
+	</ItemGroup>
+
 </Project>
