@@ -16,19 +16,21 @@
         public long Cuit { get; set; }
 
         /// <summary>
-        /// Ruta al archivo del certificado (.crt o .pem)
+        /// Ruta al archivo del certificado (.pfx, .p12, .crt)
         /// </summary>
         public string? CertificatePath { get; set; }
 
         /// <summary>
-        /// Ruta al archivo de la clave privada (.key)
+        /// Ruta al archivo de la clave privada (.key) - Solo si usa .crt separado
+        /// Nota: Archivos .crt/.key separados solo funcionan en .NET 5+
+        /// Para .NET Framework 4.8, use .pfx
         /// </summary>
         public string? PrivateKeyPath { get; set; }
 
         /// <summary>
-        /// Contraseña de la clave privada (opcional)
+        /// Contraseña del certificado (si está protegido)
         /// </summary>
-        public string? PrivateKeyPassword { get; set; }
+        public string? CertificatePassword { get; set; }
     }
 
     /// <summary>

@@ -81,8 +81,17 @@ namespace ARCA.SDK
             if (string.IsNullOrEmpty(_config.CertificatePath))
                 throw new ArcaValidationException("La ruta del certificado es requerida");
 
-            if (string.IsNullOrEmpty(_config.PrivateKeyPath))
-                throw new ArcaValidationException("La ruta de la clave privada es requerida");
+            // PrivateKeyPath solo es obligatorio si el certificado NO es .pfx/.p12
+            var isPfx = _config.CertificatePath.EndsWith(".pfx", StringComparison.OrdinalIgnoreCase) ||
+                        _config.CertificatePath.EndsWith(".p12", StringComparison.OrdinalIgnoreCase);
+
+            if (!isPfx && string.IsNullOrEmpty(_config.PrivateKeyPath))
+            {
+                throw new ArcaValidationException(
+                    "La ruta de la clave privada es requerida cuando no se usa .pfx. " +
+                    "Use un archivo .pfx/.p12 o proporcione la ruta al archivo .key"
+                );
+            }
         }
     }
 }

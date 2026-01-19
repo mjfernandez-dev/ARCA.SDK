@@ -23,7 +23,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Clients\" />
-	  <Folder Include="Utils\" />
 	</ItemGroup>
 
 	<ItemGroup>
