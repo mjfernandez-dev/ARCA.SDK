@@ -1,6 +1,7 @@
 ﻿using ARCA.SDK.Configuration;
 using ARCA.SDK.Models;
 using ARCA.SDK.Exceptions;
+using ARCA.SDK.Services;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace ARCA.SDK
     public class ArcaClient
     {
         private readonly ArcaConfig _config;
+        private readonly AuthService _authService;
+        private readonly FacturacionService _facturacionService;
 
         /// <summary>
         /// Crea una nueva instancia del cliente ARCA
@@ -22,6 +25,9 @@ namespace ARCA.SDK
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
             ValidarConfiguracion();
+
+            _authService = new AuthService(_config);
+            _facturacionService = new FacturacionService(_config, _authService);
         }
 
         /// <summary>
@@ -34,11 +40,7 @@ namespace ARCA.SDK
             Comprobante comprobante,
             CancellationToken cancellationToken = default)
         {
-            if (comprobante == null)
-                throw new ArgumentNullException(nameof(comprobante));
-
-            // TODO: Implementar lógica de autorización
-            throw new NotImplementedException("Próximamente implementaremos la autorización");
+            return await _facturacionService.AutorizarComprobanteAsync(comprobante, cancellationToken);
         }
 
         /// <summary>
@@ -53,8 +55,11 @@ namespace ARCA.SDK
             int tipoComprobante,
             CancellationToken cancellationToken = default)
         {
-            // TODO: Implementar consulta de último comprobante
-            throw new NotImplementedException("Próximamente implementaremos la consulta");
+            return await _facturacionService.ObtenerUltimoComprobanteAsync(
+                puntoVenta,
+                tipoComprobante,
+                cancellationToken
+            );
         }
 
         /// <summary>
@@ -70,7 +75,16 @@ namespace ARCA.SDK
             CancellationToken cancellationToken = default)
         {
             // TODO: Implementar consulta de cotización
-            throw new NotImplementedException("Próximamente implementaremos la consulta de cotización");
+            await Task.CompletedTask;
+            throw new NotImplementedException("Consulta de cotización próximamente");
+        }
+
+        /// <summary>
+        /// Limpia el caché de autenticación
+        /// </summary>
+        public void LimpiarCache()
+        {
+            _authService.LimpiarCache();
         }
 
         private void ValidarConfiguracion()
