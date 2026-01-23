@@ -40,6 +40,7 @@ namespace ARCA.SDK.Clients
         public decimal ImpTrib { get; set; }
         public string MonId { get; set; } = "PES";
         public decimal MonCotiz { get; set; }
+        public int CondicionIVAReceptor { get; set; }
         public string? FchServDesde { get; set; }
         public string? FchServHasta { get; set; }
         public string? FchVtoPago { get; set; }

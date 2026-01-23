@@ -78,33 +78,41 @@ namespace ARCA.SDK.Clients
             string soapRequest,
             string soapAction,
             CancellationToken cancellationToken)
-        {
-            try
-            {
-                var httpRequest = new HttpRequestMessage(HttpMethod.Post, _endpointUrl)
                 {
-                    Content = new StringContent(soapRequest, Encoding.UTF8, "text/xml")
-                };
+                    try
+                    {
+                        var httpRequest = new HttpRequestMessage(HttpMethod.Post, _endpointUrl)
+                        {
+                            Content = new StringContent(soapRequest, Encoding.UTF8, "text/xml")
+                        };
 
-                httpRequest.Headers.Add("SOAPAction", soapAction);
+                        httpRequest.Headers.Add("SOAPAction", soapAction);
 
-                var httpResponse = await _httpClient.SendAsync(httpRequest, cancellationToken);
-                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+                        var httpResponse = await _httpClient.SendAsync(httpRequest, cancellationToken);
+                        var responseContent = await httpResponse.Content.ReadAsStringAsync();
 
-                if (!httpResponse.IsSuccessStatusCode)
-                {
-                    throw new ArcaException(
-                        $"Error en comunicación con WSFE. Status: {httpResponse.StatusCode}"
-                    );
+                        // 👇 AGREGAR ESTAS LÍNEAS DE LOGGING
+                        Console.WriteLine("=== REQUEST WSFE ===");
+                        Console.WriteLine(soapRequest);
+                        Console.WriteLine("===================");
+                        Console.WriteLine("=== RESPONSE WSFE ===");
+                        Console.WriteLine(responseContent);
+                        Console.WriteLine("=====================\n");
+
+                        if (!httpResponse.IsSuccessStatusCode)
+                        {
+                            throw new ArcaException(
+                                $"Error en comunicación con WSFE. Status: {httpResponse.StatusCode}"
+                            );
+                        }
+
+                        return responseContent;
+                    }
+                    catch (Exception ex) when (!(ex is ArcaException))
+                    {
+                        throw new ArcaException("Error al comunicarse con WSFE", ex);
+                    }
                 }
-
-                return responseContent;
-            }
-            catch (Exception ex) when (!(ex is ArcaException))
-            {
-                throw new ArcaException("Error al comunicarse con WSFE", ex);
-            }
-        }
 
         private string BuildUltimoComprobanteRequest(WsfeAuth auth, int puntoVenta, int tipoComprobante)
         {
@@ -168,6 +176,8 @@ namespace ARCA.SDK.Clients
 
         private void AppendComprobante(StringBuilder soap, WsfeComprobante comp)
         {
+            var inv = System.Globalization.CultureInfo.InvariantCulture; // 👈 AGREGAR ESTA LÍNEA AL INICIO
+
             soap.AppendLine("          <ar:FECAEDetRequest>");
             soap.AppendLine($"            <ar:Concepto>{comp.Concepto}</ar:Concepto>");
             soap.AppendLine($"            <ar:DocTipo>{comp.DocTipo}</ar:DocTipo>");
@@ -175,14 +185,15 @@ namespace ARCA.SDK.Clients
             soap.AppendLine($"            <ar:CbteDesde>{comp.CbteDesde}</ar:CbteDesde>");
             soap.AppendLine($"            <ar:CbteHasta>{comp.CbteHasta}</ar:CbteHasta>");
             soap.AppendLine($"            <ar:CbteFch>{comp.CbteFch}</ar:CbteFch>");
-            soap.AppendLine($"            <ar:ImpTotal>{comp.ImpTotal:F2}</ar:ImpTotal>");
-            soap.AppendLine($"            <ar:ImpTotConc>{comp.ImpTotConc:F2}</ar:ImpTotConc>");
-            soap.AppendLine($"            <ar:ImpNeto>{comp.ImpNeto:F2}</ar:ImpNeto>");
-            soap.AppendLine($"            <ar:ImpOpEx>{comp.ImpOpEx:F2}</ar:ImpOpEx>");
-            soap.AppendLine($"            <ar:ImpIVA>{comp.ImpIVA:F2}</ar:ImpIVA>");
-            soap.AppendLine($"            <ar:ImpTrib>{comp.ImpTrib:F2}</ar:ImpTrib>");
+            soap.AppendLine($"            <ar:ImpTotal>{comp.ImpTotal.ToString("F2", inv)}</ar:ImpTotal>");
+            soap.AppendLine($"            <ar:ImpTotConc>{comp.ImpTotConc.ToString("F2", inv)}</ar:ImpTotConc>");
+            soap.AppendLine($"            <ar:ImpNeto>{comp.ImpNeto.ToString("F2", inv)}</ar:ImpNeto>");
+            soap.AppendLine($"            <ar:ImpOpEx>{comp.ImpOpEx.ToString("F2", inv)}</ar:ImpOpEx>");
+            soap.AppendLine($"            <ar:ImpIVA>{comp.ImpIVA.ToString("F2", inv)}</ar:ImpIVA>");
+            soap.AppendLine($"            <ar:ImpTrib>{comp.ImpTrib.ToString("F2", inv)}</ar:ImpTrib>");
             soap.AppendLine($"            <ar:MonId>{comp.MonId}</ar:MonId>");
-            soap.AppendLine($"            <ar:MonCotiz>{comp.MonCotiz:F6}</ar:MonCotiz>");
+            soap.AppendLine($"            <ar:MonCotiz>{comp.MonCotiz.ToString("F6", inv)}</ar:MonCotiz>");
+            soap.AppendLine($"            <ar:CondicionIVAReceptorId>{comp.CondicionIVAReceptor}</ar:CondicionIVAReceptorId>"); ;
 
             // Campos opcionales
             if (!string.IsNullOrEmpty(comp.FchServDesde))
@@ -200,8 +211,8 @@ namespace ARCA.SDK.Clients
                 {
                     soap.AppendLine("              <ar:AlicIva>");
                     soap.AppendLine($"                <ar:Id>{iva.Id}</ar:Id>");
-                    soap.AppendLine($"                <ar:BaseImp>{iva.BaseImp:F2}</ar:BaseImp>");
-                    soap.AppendLine($"                <ar:Importe>{iva.Importe:F2}</ar:Importe>");
+                    soap.AppendLine($"                <ar:BaseImp>{iva.BaseImp.ToString("F2", inv)}</ar:BaseImp>");
+                    soap.AppendLine($"                <ar:Importe>{iva.Importe.ToString("F2", inv)}</ar:Importe>");
                     soap.AppendLine("              </ar:AlicIva>");
                 }
                 soap.AppendLine("            </ar:Iva>");

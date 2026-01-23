@@ -1,18 +1,24 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 
 namespace ARCA.SDK.Services
 {
     /// <summary>
-    /// Caché en memoria para tokens de autenticación
+    /// Caché persistente de tokens de autenticación
     /// </summary>
     internal class AuthCache
     {
-        private readonly ConcurrentDictionary<string, CachedToken> _cache;
+        private readonly string _cacheFilePath;
+        private Dictionary<string, TokenCacheEntry> _cache;
+        private readonly object _lock = new object();
 
         public AuthCache()
         {
-            _cache = new ConcurrentDictionary<string, CachedToken>();
+            _cacheFilePath = GetCacheFilePath();
+            _cache = new Dictionary<string, TokenCacheEntry>();
+            LoadFromDisk();
         }
 
         /// <summary>
@@ -20,49 +26,148 @@ namespace ARCA.SDK.Services
         /// </summary>
         public (string Token, string Sign)? Get(string key)
         {
-            if (_cache.TryGetValue(key, out var cached))
+            lock (_lock)
             {
-                // Verificar si el token aún es válido (con margen de 5 minutos)
-                if (cached.Expiration > DateTime.Now.AddMinutes(5))
+                if (_cache.TryGetValue(key, out var entry))
                 {
-                    return (cached.Token, cached.Sign);
+                    // Verificar si el token aún es válido (con margen de 5 minutos)
+                    if (entry.IsValid())
+                    {
+                        return (entry.Token, entry.Sign);
+                    }
+
+                    // Token expirado, remover del caché
+                    _cache.Remove(key);
+                    SaveToDisk();
                 }
 
-                // Token expirado, remover del caché
-                _cache.TryRemove(key, out _);
+                return null;
             }
-
-            return null;
         }
 
         /// <summary>
-        /// Guarda token en el caché
+        /// Guarda token en el caché (memoria y disco)
         /// </summary>
         public void Set(string key, string token, string sign, DateTime expiration)
         {
-            var cached = new CachedToken
+            lock (_lock)
             {
-                Token = token,
-                Sign = sign,
-                Expiration = expiration
-            };
+                var entry = new TokenCacheEntry
+                {
+                    Token = token,
+                    Sign = sign,
+                    Expiration = expiration
+                };
 
-            _cache.AddOrUpdate(key, cached, (k, old) => cached);
+                _cache[key] = entry;
+                SaveToDisk();
+            }
         }
 
         /// <summary>
-        /// Limpia el caché completo
+        /// Limpia el caché completo (memoria y disco)
         /// </summary>
         public void Clear()
         {
-            _cache.Clear();
+            lock (_lock)
+            {
+                _cache.Clear();
+                SaveToDisk();
+            }
         }
 
-        private class CachedToken
+        /// <summary>
+        /// Obtiene la ruta del archivo de caché según el sistema operativo
+        /// </summary>
+        private string GetCacheFilePath()
         {
-            public string Token { get; set; } = string.Empty;
-            public string Sign { get; set; } = string.Empty;
-            public DateTime Expiration { get; set; }
+            string baseDir;
+
+            // Detectar sistema operativo
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                // Windows: %APPDATA%\ARCA.SDK
+                baseDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "ARCA.SDK"
+                );
+            }
+            else
+            {
+                // Linux/Mac: ~/.arca-sdk
+                var home = Environment.GetEnvironmentVariable("HOME")
+                    ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                baseDir = Path.Combine(home, ".arca-sdk");
+            }
+
+            // Crear directorio si no existe
+            if (!Directory.Exists(baseDir))
+            {
+                Directory.CreateDirectory(baseDir);
+            }
+
+            return Path.Combine(baseDir, "tokens.json");
+        }
+
+        /// <summary>
+        /// Carga el caché desde disco
+        /// </summary>
+        private void LoadFromDisk()
+        {
+            lock (_lock)
+            {
+                try
+                {
+                    if (File.Exists(_cacheFilePath))
+                    {
+                        var json = File.ReadAllText(_cacheFilePath);
+                        var loaded = JsonSerializer.Deserialize<Dictionary<string, TokenCacheEntry>>(json);
+
+                        if (loaded != null)
+                        {
+                            // Filtrar tokens expirados al cargar
+                            _cache = new Dictionary<string, TokenCacheEntry>();
+                            foreach (var kvp in loaded)
+                            {
+                                if (kvp.Value.IsValid())
+                                {
+                                    _cache[kvp.Key] = kvp.Value;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Si hay error al cargar, empezar con caché vacío
+                    _cache = new Dictionary<string, TokenCacheEntry>();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Guarda el caché a disco
+        /// </summary>
+        private void SaveToDisk()
+        {
+            lock (_lock)
+            {
+                try
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    };
+
+                    var json = JsonSerializer.Serialize(_cache, options);
+                    File.WriteAllText(_cacheFilePath, json);
+                }
+                catch
+                {
+                    // Si falla el guardado, continuar (el caché en memoria sigue funcionando)
+                    // En producción podrías loguear este error
+                }
+            }
         }
     }
 }

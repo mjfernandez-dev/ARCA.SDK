@@ -61,6 +61,11 @@ namespace ARCA.SDK.Clients
                 // Leer response
                 var responseContent = await httpResponse.Content.ReadAsStringAsync();
 
+                // 👇 LOGGING TEMPORAL - PARA VER QUÉ RESPONDE ARCA
+                Console.WriteLine("=== RESPUESTA WSAA ===");
+                Console.WriteLine(responseContent);
+                Console.WriteLine("======================\n");
+
                 if (!httpResponse.IsSuccessStatusCode)
                 {
                     throw new ArcaAuthException(
@@ -78,8 +83,9 @@ namespace ARCA.SDK.Clients
             }
         }
 
-        private string BuildSoapRequest(string signedTra)
+        private string BuildSoapRequest(string signedTraBase64)
         {
+            // signedTraBase64 ya viene en Base64 desde LoginTicketRequest
             var soap = new StringBuilder();
             soap.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             soap.AppendLine("<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:wsaa=\"http://wsaa.view.sua.dvadac.desein.afip.gov\">");
@@ -87,7 +93,7 @@ namespace ARCA.SDK.Clients
             soap.AppendLine("  <soapenv:Body>");
             soap.AppendLine("    <wsaa:loginCms>");
             soap.AppendLine("      <wsaa:in0>");
-            soap.Append(System.Security.SecurityElement.Escape(signedTra));
+            soap.Append(signedTraBase64);  // Ya está en Base64
             soap.AppendLine();
             soap.AppendLine("      </wsaa:in0>");
             soap.AppendLine("    </wsaa:loginCms>");
@@ -118,9 +124,21 @@ namespace ARCA.SDK.Clients
                     throw new ArcaAuthException("Respuesta WSAA inválida: no se encontró loginCmsReturn");
                 }
 
-                var token = loginReturn.Element(ns + "token")?.Value;
-                var sign = loginReturn.Element(ns + "sign")?.Value;
-                var expirationStr = loginReturn.Element(ns + "expirationTime")?.Value;
+                // El contenido viene HTML-escapado, hay que decodificarlo
+                var loginReturnXml = System.Net.WebUtility.HtmlDecode(loginReturn.Value);
+
+                // Parsear el XML interno
+                var innerDoc = XDocument.Parse(loginReturnXml);
+
+                var credentials = innerDoc.Descendants("credentials").FirstOrDefault();
+                if (credentials == null)
+                {
+                    throw new ArcaAuthException("No se encontró el elemento credentials en la respuesta");
+                }
+
+                var token = credentials.Element("token")?.Value;
+                var sign = credentials.Element("sign")?.Value;
+                var expirationStr = innerDoc.Descendants("expirationTime").FirstOrDefault()?.Value;
 
                 if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(sign))
                 {
@@ -130,7 +148,6 @@ namespace ARCA.SDK.Clients
                 DateTime expiration = DateTime.MinValue;
                 if (!string.IsNullOrEmpty(expirationStr))
                 {
-                    // El formato puede ser: 2026-01-19T12:30:00.000-03:00
                     DateTime.TryParse(expirationStr, out expiration);
                 }
 

@@ -1,19 +1,18 @@
 ﻿using System;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Cryptography.Xml;
 using System.Text;
-using System.Xml;
 
 namespace ARCA.SDK.Services
 {
     /// <summary>
-    /// Genera el LoginTicketRequest (TRA) para autenticación con WSAA
+    /// Genera el LoginTicketRequest (TRA) firmado con PKCS#7 CMS para WSAA
     /// </summary>
     internal static class LoginTicketRequest
     {
         /// <summary>
-        /// Genera un TRA firmado para el servicio especificado
+        /// Genera un TRA firmado con PKCS#7 CMS para el servicio especificado
         /// </summary>
         public static string Generate(
             string service,
@@ -23,64 +22,73 @@ namespace ARCA.SDK.Services
             // Generar XML del TRA
             var tra = GenerateTRA(service, cuit);
 
-            // Firmar el TRA con el certificado
-            var signedTra = SignXml(tra, certificate);
+            // Firmar el TRA con PKCS#7 CMS
+            var signedCms = SignWithCMS(tra, certificate);
 
-            return signedTra;
+            return signedCms;
         }
 
         private static string GenerateTRA(string service, long cuit)
         {
-            var uniqueId = Convert.ToInt32((DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds);
-            var generationTime = DateTime.UtcNow.AddMinutes(-10);
-            var expirationTime = DateTime.UtcNow.AddMinutes(10);
+            // uniqueId debe ser un número entero (Unix timestamp en segundos es suficiente)
+            var uniqueId = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            var now = DateTime.UtcNow;
+            var generationTime = now.AddMinutes(-10);
+            var expirationTime = now.AddHours(12);
+
+            // ARCA requiere formato ISO 8601 con zona horaria
+            var generationTimeStr = generationTime.ToString("yyyy-MM-ddTHH:mm:ss.fff-00:00");
+            var expirationTimeStr = expirationTime.ToString("yyyy-MM-ddTHH:mm:ss.fff-00:00");
 
             var xml = new StringBuilder();
             xml.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             xml.AppendLine("<loginTicketRequest version=\"1.0\">");
             xml.AppendLine("  <header>");
             xml.AppendLine($"    <uniqueId>{uniqueId}</uniqueId>");
-            xml.AppendLine($"    <generationTime>{generationTime:s}</generationTime>");
-            xml.AppendLine($"    <expirationTime>{expirationTime:s}</expirationTime>");
+            xml.AppendLine($"    <generationTime>{generationTimeStr}</generationTime>");
+            xml.AppendLine($"    <expirationTime>{expirationTimeStr}</expirationTime>");
             xml.AppendLine("  </header>");
-            xml.AppendLine("  <service>{service}</service>");
+            xml.AppendLine($"  <service>{service}</service>");
             xml.AppendLine("</loginTicketRequest>");
 
             return xml.ToString();
         }
 
-        private static string SignXml(string xml, X509Certificate2 certificate)
+        private static string SignWithCMS(string xml, X509Certificate2 certificate)
         {
-            // Cargar el XML
-            var doc = new XmlDocument { PreserveWhitespace = true };
-            doc.LoadXml(xml);
-
-            // Crear objeto SignedXml
-            var signedXml = new SignedXml(doc)
+            try
             {
-                SigningKey = certificate.GetRSAPrivateKey()
-            };
+                // Convertir XML a bytes
+                var content = Encoding.UTF8.GetBytes(xml);
 
-            // Crear referencia al documento completo
-            var reference = new Reference(string.Empty);
-            reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
-            signedXml.AddReference(reference);
+                // Crear ContentInfo
+                var contentInfo = new ContentInfo(content);
 
-            // Agregar información del certificado
-            var keyInfo = new KeyInfo();
-            keyInfo.AddClause(new KeyInfoX509Data(certificate));
-            signedXml.KeyInfo = keyInfo;
+                // Crear SignedCms
+                var signedCms = new SignedCms(contentInfo, false); // false = datos incluidos
 
-            // Firmar
-            signedXml.ComputeSignature();
+                // Crear CmsSigner con el certificado
+                var signer = new CmsSigner(SubjectIdentifierType.IssuerAndSerialNumber, certificate)
+                {
+                    IncludeOption = X509IncludeOption.EndCertOnly
+                };
 
-            // Obtener XML firmado
-            var signatureXml = signedXml.GetXml();
+                // Firmar
+                signedCms.ComputeSignature(signer, false);
 
-            // Insertar firma en el documento
-            doc.DocumentElement?.AppendChild(doc.ImportNode(signatureXml, true));
-
-            return doc.OuterXml;
+                // Obtener el CMS en formato Base64
+                var signedBytes = signedCms.Encode();
+                return Convert.ToBase64String(signedBytes);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException(
+                    "Error al firmar el TRA con PKCS#7 CMS. " +
+                    "Verifique que el certificado tenga clave privada válida.",
+                    ex
+                );
+            }
         }
     }
 }

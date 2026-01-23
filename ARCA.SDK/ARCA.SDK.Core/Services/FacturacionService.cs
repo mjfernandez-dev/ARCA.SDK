@@ -127,7 +127,8 @@ namespace ARCA.SDK.Services
                 ImpIVA = comprobante.ImporteIVA,
                 ImpTrib = comprobante.ImporteTributos,
                 MonId = comprobante.MonedaId,
-                MonCotiz = comprobante.MonedaCotizacion
+                MonCotiz = comprobante.MonedaCotizacion,
+                CondicionIVAReceptor = comprobante.CondicionIVAReceptor
             };
 
             // Fechas de servicio (si aplica)

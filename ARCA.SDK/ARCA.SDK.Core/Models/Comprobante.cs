@@ -84,6 +84,12 @@ namespace ARCA.SDK.Models
         public decimal MonedaCotizacion { get; set; } = 1;
 
         /// <summary>
+        /// Condición frente al IVA del receptor (obligatorio desde RG 5616/2024)
+        /// 1=IVA Responsable Inscripto, 4=IVA Sujeto Exento, 5=Consumidor Final, 6=Responsable Monotributo
+        /// </summary>
+        public int CondicionIVAReceptor { get; set; }
+
+        /// <summary>
         /// Fecha de inicio del servicio (requerido si Concepto = 2 o 3)
         /// </summary>
         public DateTime? FechaServicioDesde { get; set; }
