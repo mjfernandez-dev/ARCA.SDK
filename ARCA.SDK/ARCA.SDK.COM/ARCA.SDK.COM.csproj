@@ -10,6 +10,7 @@
     <RootNamespace>ARCA.SDK.COM</RootNamespace>
     <AssemblyName>ARCA.SDK.COM</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RegisterForComInterop>true</RegisterForComInterop>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
@@ -41,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArcaClientCOM.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
