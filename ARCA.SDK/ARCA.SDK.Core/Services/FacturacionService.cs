@@ -176,6 +176,46 @@ namespace ARCA.SDK.Services
                     Cuit = c.Cuit
                 }).ToArray();
             }
+            // CanMisMonExt
+            if (!string.IsNullOrEmpty(comprobante.CanMisMonExt))
+                wsfe.CanMisMonExt = comprobante.CanMisMonExt;
+
+            // Período asociado
+            if (comprobante.PeriodoAsociado != null)
+            {
+                wsfe.PeriodoAsoc = new WsfePeriodoAsociado
+                {
+                    FchDesde = comprobante.PeriodoAsociado.FechaDesde.ToString("yyyyMMdd"),
+                    FchHasta = comprobante.PeriodoAsociado.FechaHasta.ToString("yyyyMMdd")
+                };
+            }
+
+            // Opcionales
+            if (comprobante.Opcionales.Count > 0)
+            {
+                wsfe.Opcionales = comprobante.Opcionales.Select(o => new WsfeOpcional
+                {
+                    Id = o.Id,
+                    Valor = o.Valor
+                }).ToArray();
+            }
+
+            // Compradores
+            if (comprobante.Compradores.Count > 0)
+            {
+                wsfe.Compradores = comprobante.Compradores.Select(c => new WsfeComprador
+                {
+                    DocTipo = c.TipoDocumento,
+                    DocNro = c.NumeroDocumento,
+                    Porcentaje = c.Porcentaje
+                }).ToArray();
+            }
+
+            // Actividades
+            if (comprobante.Actividades.Count > 0)
+            {
+                wsfe.Actividades = comprobante.Actividades.ToArray();
+            }
 
             return wsfe;
         }

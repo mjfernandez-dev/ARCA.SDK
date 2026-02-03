@@ -47,6 +47,11 @@ namespace ARCA.SDK.Clients
         public WsfeAlicuotaIVA[]? Iva { get; set; }
         public WsfeTributo[]? Tributos { get; set; }
         public WsfeComprobanteAsociado[]? CbtesAsoc { get; set; }
+        public string? CanMisMonExt { get; set; }
+        public WsfePeriodoAsociado? PeriodoAsoc { get; set; }
+        public WsfeOpcional[]? Opcionales { get; set; }
+        public WsfeComprador[]? Compradores { get; set; }
+        public long[]? Actividades { get; set; }
     }
 
     /// <summary>
@@ -128,5 +133,33 @@ namespace ARCA.SDK.Clients
     {
         public long? CbteNro { get; set; }
         public WsfeError[]? Errors { get; set; }
+    }
+
+    /// <summary>
+    /// Período asociado para WSFE
+    /// </summary>
+    internal class WsfePeriodoAsociado
+    {
+        public string FchDesde { get; set; } = string.Empty;
+        public string FchHasta { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Opcional para WSFE
+    /// </summary>
+    internal class WsfeOpcional
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Valor { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Comprador para WSFE
+    /// </summary>
+    internal class WsfeComprador
+    {
+        public int DocTipo { get; set; }
+        public long DocNro { get; set; }
+        public decimal Porcentaje { get; set; }
     }
 }

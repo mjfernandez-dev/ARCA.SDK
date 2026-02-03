@@ -118,5 +118,30 @@ namespace ARCA.SDK.Models
         /// Comprobantes asociados (para notas de crédito/débito)
         /// </summary>
         public List<ComprobanteAsociado> ComprobantesAsociados { get; set; } = new List<ComprobanteAsociado>();
+
+        /// <summary>
+        /// Indica si se utiliza la misma moneda extranjera (S/N). Solo para monedas != PES
+        /// </summary>
+        public string? CanMisMonExt { get; set; }
+
+        /// <summary>
+        /// Período asociado (para servicios)
+        /// </summary>
+        public PeriodoAsociado? PeriodoAsociado { get; set; }
+
+        /// <summary>
+        /// Datos opcionales para regímenes especiales
+        /// </summary>
+        public List<Opcional> Opcionales { get; set; } = new List<Opcional>();
+
+        /// <summary>
+        /// Compradores múltiples (operaciones con más de un comprador)
+        /// </summary>
+        public List<Comprador> Compradores { get; set; } = new List<Comprador>();
+
+        /// <summary>
+        /// Actividades económicas asociadas
+        /// </summary>
+        public List<long> Actividades { get; set; } = new List<long>();
     }
 }

@@ -217,7 +217,62 @@ namespace ARCA.SDK.Clients
                 }
                 soap.AppendLine("            </ar:Iva>");
             }
+            // Período asociado
+            if (comp.PeriodoAsoc != null)
+            {
+                soap.AppendLine("            <ar:PeriodoAsoc>");
+                soap.AppendLine($"              <ar:FchDesde>{comp.PeriodoAsoc.FchDesde}</ar:FchDesde>");
+                soap.AppendLine($"              <ar:FchHasta>{comp.PeriodoAsoc.FchHasta}</ar:FchHasta>");
+                soap.AppendLine("            </ar:PeriodoAsoc>");
+            }
 
+            // CanMisMonExt
+            if (!string.IsNullOrEmpty(comp.CanMisMonExt))
+            {
+                soap.AppendLine($"            <ar:CanMisMonExt>{comp.CanMisMonExt}</ar:CanMisMonExt>");
+            }
+
+            // Opcionales
+            if (comp.Opcionales != null && comp.Opcionales.Length > 0)
+            {
+                soap.AppendLine("            <ar:Opcionales>");
+                foreach (var opc in comp.Opcionales)
+                {
+                    soap.AppendLine("              <ar:Opcional>");
+                    soap.AppendLine($"                <ar:Id>{opc.Id}</ar:Id>");
+                    soap.AppendLine($"                <ar:Valor>{opc.Valor}</ar:Valor>");
+                    soap.AppendLine("              </ar:Opcional>");
+                }
+                soap.AppendLine("            </ar:Opcionales>");
+            }
+
+            // Compradores
+            if (comp.Compradores != null && comp.Compradores.Length > 0)
+            {
+                soap.AppendLine("            <ar:Compradores>");
+                foreach (var comprador in comp.Compradores)
+                {
+                    soap.AppendLine("              <ar:Comprador>");
+                    soap.AppendLine($"                <ar:DocTipo>{comprador.DocTipo}</ar:DocTipo>");
+                    soap.AppendLine($"                <ar:DocNro>{comprador.DocNro}</ar:DocNro>");
+                    soap.AppendLine($"                <ar:Porcentaje>{comprador.Porcentaje.ToString("F2", inv)}</ar:Porcentaje>");
+                    soap.AppendLine("              </ar:Comprador>");
+                }
+                soap.AppendLine("            </ar:Compradores>");
+            }
+
+            // Actividades
+            if (comp.Actividades != null && comp.Actividades.Length > 0)
+            {
+                soap.AppendLine("            <ar:Actividades>");
+                foreach (var actividad in comp.Actividades)
+                {
+                    soap.AppendLine("              <ar:Actividad>");
+                    soap.AppendLine($"                <ar:Id>{actividad}</ar:Id>");
+                    soap.AppendLine("              </ar:Actividad>");
+                }
+                soap.AppendLine("            </ar:Actividades>");
+            }
             soap.AppendLine("          </ar:FECAEDetRequest>");
         }
 
@@ -270,7 +325,13 @@ namespace ARCA.SDK.Clients
                         Resultado = det.Element(ns + "Resultado")?.Value,
                         CAE = det.Element(ns + "CAE")?.Value,
                         CAEFchVto = det.Element(ns + "CAEFchVto")?.Value,
-                        CbteDesde = long.TryParse(det.Element(ns + "CbteDesde")?.Value, out long cbte) ? cbte : null
+                        CbteDesde = long.TryParse(det.Element(ns + "CbteDesde")?.Value, out long cbte) ? cbte : null,
+                        // Parsear observaciones
+                        Observaciones = det.Descendants(ns + "Obs").Select(obs => new WsfeObservacion
+                        {
+                            Code = int.TryParse(obs.Element(ns + "Code")?.Value, out int code) ? code : 0,
+                            Msg = obs.Element(ns + "Msg")?.Value
+                        }).ToArray()
                     }).ToArray();
                 }
 

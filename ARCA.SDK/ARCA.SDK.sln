@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARCA.SDK.COM", "ARCA.SDK.CO
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARCA.SDK.Tests", "ARCA.SDK.Tests\ARCA.SDK.Tests.csproj", "{3628D316-1C3F-4D75-969C-0FBF613A7279}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ARCA.SDK.TestConsole", "ConsoleApp1\ARCA.SDK.TestConsole.csproj", "{29BCBB27-9FBB-44E5-A338-AC36A2CAD154}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{3628D316-1C3F-4D75-969C-0FBF613A7279}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3628D316-1C3F-4D75-969C-0FBF613A7279}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3628D316-1C3F-4D75-969C-0FBF613A7279}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29BCBB27-9FBB-44E5-A338-AC36A2CAD154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29BCBB27-9FBB-44E5-A338-AC36A2CAD154}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29BCBB27-9FBB-44E5-A338-AC36A2CAD154}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29BCBB27-9FBB-44E5-A338-AC36A2CAD154}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
